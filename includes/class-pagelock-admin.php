@@ -365,6 +365,7 @@ class Pagelock_Admin
 
                 <p class="submit">
                     <input type="submit" name="submit" id="submit" class="button button-primary" value="<?php _e('Save Settings', 'pagelock'); ?>">
+                <div id="pagelock-save-message" style="display: none; margin-left: 15px; padding: 8px 12px; border-radius: 4px; font-weight: 500;"></div>
                 </p>
             </form>
         </div>
@@ -473,19 +474,52 @@ class Pagelock_Admin
                     $('#button_radius_value').text($(this).val() + 'px');
                 });
 
+                function showSaveMessage(message, isSuccess) {
+                    var messageDiv = $('#pagelock-save-message');
+                    messageDiv.removeClass('success error');
+
+                    if (isSuccess) {
+                        messageDiv.addClass('success');
+                        messageDiv.css({
+                            'background-color': '#d4edda',
+                            'color': '#155724',
+                            'border': '1px solid #c3e6cb'
+                        });
+                    } else {
+                        messageDiv.addClass('error');
+                        messageDiv.css({
+                            'background-color': '#f8d7da',
+                            'color': '#721c24',
+                            'border': '1px solid #f5c6cb'
+                        });
+                    }
+
+                    messageDiv.text(message).fadeIn(300);
+
+                    setTimeout(function() {
+                        messageDiv.fadeOut(300);
+                    }, 3000);
+                }
+
                 $('#pagelock-settings-form').on('submit', function(e) {
                     e.preventDefault();
                     var form = $(this);
                     var formData = form.serialize();
+                    var submitBtn = $('#submit');
+                    var originalText = submitBtn.val();
+
+                    submitBtn.val('<?php _e('Saving...', 'pagelock'); ?>').prop('disabled', true);
 
                     $.post(form.attr('action'), formData, function(response) {
                         if (response.success) {
-                            $('<div class="notice notice-success is-dismissible"><p>' + response.data + '</p></div>').insertAfter('.wrap h1');
+                            showSaveMessage(response.data, true);
                         } else {
-                            $('<div class="notice notice-error is-dismissible"><p>' + (response.data || 'An error occurred.') + '</p></div>').insertAfter('.wrap h1');
+                            showSaveMessage(response.data || 'An error occurred.', false);
                         }
                     }).fail(function() {
-                        $('<div class="notice notice-error is-dismissible"><p>An error occurred while saving settings.</p></div>').insertAfter('.wrap h1');
+                        showSaveMessage('An error occurred while saving settings.', false);
+                    }).always(function() {
+                        submitBtn.val(originalText).prop('disabled', false);
                     });
                 });
             });

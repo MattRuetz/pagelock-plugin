@@ -326,17 +326,257 @@ class Pagelock_Frontend
                 .pagelock-footer {
                     color: <?php echo esc_attr($settings['body_text_color']); ?>;
                     font-size: 0.9rem;
+                    line-height: 1.5;
                 }
 
-                /* Responsive */
-                @media (max-width: 768px) {
+                /* Responsive Design */
+                /* Large tablets and small desktops */
+                @media (max-width: 1024px) {
                     .pagelock-container {
-                        padding: 2rem;
-                        margin: 1rem;
+                        max-width: 420px;
+                        width: 85%;
+                    }
+                }
+
+                /* Tablets */
+                @media (max-width: 768px) {
+                    body {
+                        padding: 1rem;
+                        overflow-y: auto;
+                        min-height: 100vh;
+                    }
+
+                    .pagelock-container {
+                        padding: 2.5rem 2rem;
+                        margin: 0;
+                        width: 100%;
+                        max-width: 100%;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
                     }
 
                     .pagelock-title {
                         font-size: 1.75rem;
+                        margin-bottom: 0.75rem;
+                    }
+
+                    .pagelock-subtitle {
+                        font-size: 1rem;
+                        margin-bottom: 1.5rem;
+                    }
+
+                    .pagelock-icon {
+                        width: 70px;
+                        height: 70px;
+                        margin-bottom: 1.5rem;
+                    }
+
+                    .pagelock-button {
+                        padding: 1rem 1.5rem;
+                        font-size: 1rem;
+                        min-height: 48px;
+                        /* Minimum touch target size */
+                    }
+
+                    .pagelock-error {
+                        padding: 0.875rem;
+                        font-size: 0.9rem;
+                    }
+
+                    .pagelock-footer {
+                        font-size: 0.85rem;
+                    }
+                }
+
+                /* Tablet icon styling */
+                <?php if (empty($settings['icon_image'])): ?>@media (max-width: 768px) {
+                    .pagelock-icon::before {
+                        font-size: 2rem;
+                    }
+                }
+
+                <?php endif; ?>
+                /* Tablet field styling - minimal */
+                <?php if ($settings['field_design'] === 'minimal'): ?>@media (max-width: 768px) {
+                    input[type="password"].pagelock-input {
+                        padding: 1rem 0.5rem;
+                        font-size: 1rem;
+                    }
+                }
+
+                <?php else: ?>@media (max-width: 768px) {
+                    input[type="password"].pagelock-input {
+                        padding: 1rem;
+                        font-size: 1rem;
+                    }
+                }
+
+                <?php endif; ?>
+                /* Mobile phones */
+                @media (max-width: 480px) {
+                    body {
+                        padding: 0.5rem;
+                    }
+
+                    .pagelock-container {
+                        padding: 2rem 1.5rem;
+                        border-radius: <?php echo min(24, intval($settings['form_border_radius'])); ?>px;
+                    }
+
+                    .pagelock-title {
+                        font-size: 1.5rem;
+                        line-height: 1.3;
+                    }
+
+                    .pagelock-subtitle {
+                        font-size: 0.95rem;
+                        margin-bottom: 1.25rem;
+                    }
+
+                    .pagelock-icon {
+                        width: 60px;
+                        height: 60px;
+                        margin-bottom: 1.25rem;
+                    }
+
+                    .pagelock-form {
+                        margin-bottom: 1.5rem;
+                    }
+
+                    .pagelock-button {
+                        padding: 0.875rem 1.25rem;
+                        font-size: 0.95rem;
+                        min-height: 44px;
+                        border-radius: <?php echo min(16, intval($settings['button_border_radius'])); ?>px;
+                    }
+
+                    .pagelock-error {
+                        padding: 0.75rem;
+                        font-size: 0.85rem;
+                        border-radius: 8px;
+                    }
+
+                    .pagelock-footer {
+                        font-size: 0.8rem;
+                        line-height: 1.4;
+                    }
+                }
+
+                /* Mobile icon styling */
+                <?php if (empty($settings['icon_image'])): ?>@media (max-width: 480px) {
+                    .pagelock-icon::before {
+                        font-size: 1.75rem;
+                    }
+                }
+
+                <?php endif; ?>
+                /* Mobile field styling - minimal */
+                <?php if ($settings['field_design'] === 'minimal'): ?>@media (max-width: 480px) {
+                    input[type="password"].pagelock-input {
+                        padding: 0.875rem 0.25rem;
+                        font-size: 0.95rem;
+                        margin-bottom: 1.25rem;
+                    }
+                }
+
+                <?php else: ?>@media (max-width: 480px) {
+                    input[type="password"].pagelock-input {
+                        padding: 0.875rem 1rem;
+                        font-size: 0.95rem;
+                        margin-bottom: 1.25rem;
+                        border-radius: <?php echo min(16, intval($settings['field_border_radius'])); ?>px;
+                    }
+                }
+
+                <?php endif; ?>
+                /* Very small screens */
+                @media (max-width: 320px) {
+                    .pagelock-container {
+                        padding: 1.5rem 1rem;
+                    }
+
+                    .pagelock-title {
+                        font-size: 1.375rem;
+                    }
+
+                    .pagelock-subtitle {
+                        font-size: 0.9rem;
+                    }
+
+                    .pagelock-icon {
+                        width: 50px;
+                        height: 50px;
+                        margin-bottom: 1rem;
+                    }
+                }
+
+                /* Very small screen icon styling */
+                <?php if (empty($settings['icon_image'])): ?>@media (max-width: 320px) {
+                    .pagelock-icon::before {
+                        font-size: 1.5rem;
+                    }
+                }
+
+                <?php endif; ?>
+                /* Touch device optimizations */
+                @media (hover: none) and (pointer: coarse) {
+                    .pagelock-button:hover {
+                        transform: none;
+                        box-shadow: 0 4px 15px rgba(237, 154, 37, 0.2);
+                    }
+
+                    .pagelock-button:active {
+                        transform: scale(0.98);
+                        transition: transform 0.1s ease;
+                    }
+                }
+
+                /* Touch device field focus - default style only */
+                <?php if ($settings['field_design'] !== 'minimal'): ?>@media (hover: none) and (pointer: coarse) {
+                    input[type="password"].pagelock-input:focus {
+                        box-shadow: 0 0 0 2px rgba(165, 171, 82, 0.1);
+                    }
+                }
+
+                <?php endif; ?>
+                /* High DPI displays */
+                @media (-webkit-min-device-pixel-ratio: 2),
+                (min-resolution: 192dpi) {
+                    .pagelock-container {
+                        backdrop-filter: blur(8px);
+                    }
+                }
+
+                /* Landscape orientation on phones */
+                @media (max-width: 768px) and (orientation: landscape) and (max-height: 500px) {
+                    body {
+                        align-items: flex-start;
+                        padding-top: 2rem;
+                        overflow-y: auto;
+                    }
+
+                    .pagelock-container {
+                        margin: 0 auto;
+                        min-height: auto;
+                    }
+
+                    .pagelock-icon {
+                        width: 50px;
+                        height: 50px;
+                        margin-bottom: 1rem;
+                    }
+
+                    .pagelock-title {
+                        font-size: 1.375rem;
+                        margin-bottom: 0.5rem;
+                    }
+
+                    .pagelock-subtitle {
+                        font-size: 0.9rem;
+                        margin-bottom: 1rem;
+                    }
+
+                    .pagelock-form {
+                        margin-bottom: 1rem;
                     }
                 }
             </style>
