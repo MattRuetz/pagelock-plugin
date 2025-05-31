@@ -1,0 +1,164 @@
+/* Pagelock Admin Styles */
+
+.pagelock-admin {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.pagelock-admin h1 {
+    color: #6C0E23;
+    margin-bottom: 1rem;
+}
+
+.pagelock-admin .form-table th {
+    padding: 1rem 0.5rem;
+    font-weight: 600;
+    color: #46351D;
+}
+
+.pagelock-admin .form-table td {
+    padding: 1rem 0.5rem;
+}
+
+.pagelock-admin .regular-text {
+    border: 2px solid rgba(165, 171, 82, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: rgba(248, 231, 206, 0.3);
+    transition: all 0.3s ease;
+}
+
+.pagelock-admin .regular-text:focus {
+    border-color: #A5AB52;
+    box-shadow: 0 0 0 3px rgba(165, 171, 82, 0.1);
+    background: #fff;
+    outline: none;
+}
+
+.pagelock-admin select[multiple] {
+    border: 2px solid rgba(165, 171, 82, 0.3);
+    border-radius: 8px;
+    background: rgba(248, 231, 206, 0.3);
+    padding: 0.5rem;
+}
+
+.pagelock-admin select[multiple]:focus {
+    border-color: #A5AB52;
+    box-shadow: 0 0 0 3px rgba(165, 171, 82, 0.1);
+    outline: none;
+}
+
+.pagelock-admin .button-primary {
+    background: linear-gradient(135deg, #A5AB52 0%, #566246 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    text-shadow: none;
+    box-shadow: 0 2px 8px rgba(165, 171, 82, 0.3);
+    transition: all 0.3s ease;
+}
+
+.pagelock-admin .button-primary:hover {
+    background: linear-gradient(135deg, #94A147 0%, #4A5A3C 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(165, 171, 82, 0.4);
+}
+
+.pagelock-admin .notice {
+    border-radius: 8px;
+    border-left-width: 4px;
+}
+
+.pagelock-admin .wp-list-table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pagelock-admin .wp-list-table th {
+    background: rgba(248, 231, 206, 0.5);
+    color: #6C0E23;
+    font-weight: 600;
+    border-bottom: 2px solid rgba(165, 171, 82, 0.3);
+}
+
+.pagelock-admin .wp-list-table td {
+    vertical-align: middle;
+}
+
+.pagelock-admin .button {
+    border-radius: 6px;
+    margin-right: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.pagelock-admin .button:hover {
+    transform: translateY(-1px);
+}
+
+.pagelock-admin .page-title-action {
+    background: linear-gradient(135deg, #ED9A25 0%, #D17F2B 100%);
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.pagelock-admin .page-title-action:hover {
+    background: linear-gradient(135deg, #DC8F20 0%, #C17221 100%);
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(237, 154, 37, 0.3);
+}
+
+/* Loading states */
+.pagelock-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.pagelock-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #ccc;
+    border-top-color: #A5AB52;
+    border-radius: 50%;
+    animation: pagelock-spin 1s linear infinite;
+}
+
+@keyframes pagelock-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .pagelock-admin .form-table {
+        font-size: 14px;
+    }
+    
+    .pagelock-admin .regular-text {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    .pagelock-admin .wp-list-table {
+        font-size: 14px;
+    }
+    
+    .pagelock-admin .button {
+        padding: 0.5rem 0.75rem;
+        font-size: 14px;
+    }
+} 

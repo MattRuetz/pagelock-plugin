@@ -1,0 +1,26 @@
+/* Pagelock Frontend Styles */
+
+/* Additional styles for frontend password form if needed */
+.pagelock-frontend-container {
+    /* Styles already defined inline in the frontend class for better performance */
+}
+
+/* Utility classes for potential future use */
+.pagelock-hidden {
+    display: none !important;
+}
+
+.pagelock-fade-in {
+    animation: pagelock-fade-in 0.3s ease-in-out;
+}
+
+@keyframes pagelock-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+} 
