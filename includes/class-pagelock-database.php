@@ -35,6 +35,9 @@ class Pagelock_Database
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
+
+        // Set default style settings
+        self::set_default_settings();
     }
 
     /**
@@ -46,6 +49,60 @@ class Pagelock_Database
 
         $table_name = $wpdb->prefix . 'pagelock_locks';
         $wpdb->query("DROP TABLE IF EXISTS $table_name");
+
+        // Remove style settings
+        delete_option('pagelock_settings');
+    }
+
+    /**
+     * Set default style settings
+     */
+    public static function set_default_settings()
+    {
+        $default_settings = array(
+            'icon_image' => '',
+            'icon_image_id' => '',
+            'button_color' => '#ED9A25',
+            'form_background_color' => 'rgba(255, 255, 255, 0.95)',
+            'heading_text_color' => '#6C0E23',
+            'body_text_color' => '#46351D',
+            'background_type' => 'curve',
+            'background_solid_color' => '#F8E7CE',
+            'background_curve_color1' => '#F8E7CE',
+            'background_curve_color2' => '#F8E7CE',
+            'background_image' => '',
+            'background_image_id' => '',
+            'background_image_overlay' => true,
+            'background_image_overlay_color' => 'rgba(248, 231, 206, 0.8)',
+            'background_image_blur' => 0
+        );
+
+        if (!get_option('pagelock_settings')) {
+            add_option('pagelock_settings', $default_settings);
+        }
+    }
+
+    /**
+     * Get style settings
+     */
+    public static function get_settings()
+    {
+        $settings = get_option('pagelock_settings');
+        if (!$settings) {
+            self::set_default_settings();
+            $settings = get_option('pagelock_settings');
+        }
+        return $settings;
+    }
+
+    /**
+     * Update style settings
+     */
+    public static function update_settings($new_settings)
+    {
+        $current_settings = self::get_settings();
+        $updated_settings = array_merge($current_settings, $new_settings);
+        return update_option('pagelock_settings', $updated_settings);
     }
 
     /**

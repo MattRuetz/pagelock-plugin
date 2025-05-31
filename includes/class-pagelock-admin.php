@@ -17,6 +17,7 @@ class Pagelock_Admin
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('wp_ajax_pagelock_save_lock', array($this, 'handle_save_lock'));
         add_action('wp_ajax_pagelock_delete_lock', array($this, 'handle_delete_lock'));
+        add_action('wp_ajax_pagelock_save_settings', array($this, 'handle_save_settings'));
     }
 
     public function add_admin_menu()
@@ -47,6 +48,15 @@ class Pagelock_Admin
             'manage_options',
             'pagelock-add',
             array($this, 'add_lock_page')
+        );
+
+        add_submenu_page(
+            'pagelock',
+            __('Settings', 'pagelock'),
+            __('Settings', 'pagelock'),
+            'manage_options',
+            'pagelock-settings',
+            array($this, 'settings_page')
         );
     }
 
@@ -138,6 +148,277 @@ class Pagelock_Admin
         $this->render_lock_form($lock);
     }
 
+    public function settings_page()
+    {
+        $settings = Pagelock_Database::get_settings();
+    ?>
+        <div class="wrap">
+            <h1><?php _e('Pagelock Settings', 'pagelock'); ?></h1>
+
+            <form method="post" action="<?php echo admin_url('admin-ajax.php'); ?>" id="pagelock-settings-form">
+                <?php wp_nonce_field('pagelock_save_settings'); ?>
+                <input type="hidden" name="action" value="pagelock_save_settings">
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="icon_image"><?php _e('Icon Image', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <div class="pagelock-media-upload">
+                                <input type="hidden" name="icon_image_id" id="icon_image_id" value="<?php echo esc_attr($settings['icon_image_id'] ?? ''); ?>">
+                                <div id="icon_image_preview">
+                                    <?php if (!empty($settings['icon_image'])): ?>
+                                        <img src="<?php echo esc_url($settings['icon_image']); ?>" style="max-width: 80px; max-height: 80px; display: block; margin-bottom: 10px;">
+                                    <?php endif; ?>
+                                </div>
+                                <button type="button" class="button" id="select_icon_image"><?php _e('Select Image', 'pagelock'); ?></button>
+                                <button type="button" class="button" id="remove_icon_image" style="margin-left: 5px;"><?php _e('Remove Image', 'pagelock'); ?></button>
+                            </div>
+                            <p class="description"><?php _e('Select an image from the media library to replace the plant emoji in the password form.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="button_color"><?php _e('Button Color', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" name="button_color" id="button_color" value="<?php echo esc_attr($settings['button_color']); ?>">
+                            <p class="description"><?php _e('Color of the access button on the password form.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="form_background_color"><?php _e('Form Background Color', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" name="form_background_color" id="form_background_color" value="<?php echo esc_attr($settings['form_background_color']); ?>" class="regular-text">
+                            <p class="description"><?php _e('Background color of the password form (supports rgba values).', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="heading_text_color"><?php _e('Heading Text Color', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" name="heading_text_color" id="heading_text_color" value="<?php echo esc_attr($settings['heading_text_color']); ?>">
+                            <p class="description"><?php _e('Color of the main heading text.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="body_text_color"><?php _e('Body Text Color', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" name="body_text_color" id="body_text_color" value="<?php echo esc_attr($settings['body_text_color']); ?>">
+                            <p class="description"><?php _e('Color of the body text and descriptions.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="background_type"><?php _e('Background Type', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <select name="background_type" id="background_type">
+                                <option value="solid" <?php selected($settings['background_type'], 'solid'); ?>><?php _e('Solid Color', 'pagelock'); ?></option>
+                                <option value="curve" <?php selected($settings['background_type'], 'curve'); ?>><?php _e('Gradient Curve', 'pagelock'); ?></option>
+                                <option value="image" <?php selected($settings['background_type'], 'image'); ?>><?php _e('Image', 'pagelock'); ?></option>
+                            </select>
+                            <p class="description"><?php _e('Choose the type of background for the password form.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="background-solid-row">
+                        <th scope="row">
+                            <label for="background_solid_color"><?php _e('Background Color', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" name="background_solid_color" id="background_solid_color" value="<?php echo esc_attr($settings['background_solid_color']); ?>">
+                            <p class="description"><?php _e('Solid background color.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="background-curve-row">
+                        <th scope="row">
+                            <label for="background_curve_color1"><?php _e('Gradient Color 1', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" name="background_curve_color1" id="background_curve_color1" value="<?php echo esc_attr($settings['background_curve_color1']); ?>">
+                            <p class="description"><?php _e('First color of the gradient.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="background-curve-row">
+                        <th scope="row">
+                            <label for="background_curve_color2"><?php _e('Gradient Color 2', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" name="background_curve_color2" id="background_curve_color2" value="<?php echo esc_attr($settings['background_curve_color2']); ?>">
+                            <p class="description"><?php _e('Second color of the gradient.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="background-image-row">
+                        <th scope="row">
+                            <label for="background_image"><?php _e('Background Image', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <div class="pagelock-media-upload">
+                                <input type="hidden" name="background_image_id" id="background_image_id" value="<?php echo esc_attr($settings['background_image_id'] ?? ''); ?>">
+                                <div id="background_image_preview">
+                                    <?php if (!empty($settings['background_image'])): ?>
+                                        <img src="<?php echo esc_url($settings['background_image']); ?>" style="max-width: 200px; max-height: 150px; display: block; margin-bottom: 10px;">
+                                    <?php endif; ?>
+                                </div>
+                                <button type="button" class="button" id="select_background_image"><?php _e('Select Image', 'pagelock'); ?></button>
+                                <button type="button" class="button" id="remove_background_image" style="margin-left: 5px;"><?php _e('Remove Image', 'pagelock'); ?></button>
+                            </div>
+                            <p class="description"><?php _e('Select a background image from the media library.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="background-image-row">
+                        <th scope="row">
+                            <label for="background_image_overlay"><?php _e('Image Overlay', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <label><input type="checkbox" name="background_image_overlay" id="background_image_overlay" value="1" <?php checked($settings['background_image_overlay']); ?>> <?php _e('Enable overlay', 'pagelock'); ?></label>
+                            <p class="description"><?php _e('Add a colored overlay over the background image.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="background-image-row">
+                        <th scope="row">
+                            <label for="background_image_overlay_color"><?php _e('Overlay Color', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" name="background_image_overlay_color" id="background_image_overlay_color" value="<?php echo esc_attr($settings['background_image_overlay_color']); ?>" class="regular-text">
+                            <p class="description"><?php _e('Color of the overlay (supports rgba values).', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="background-image-row">
+                        <th scope="row">
+                            <label for="background_image_blur"><?php _e('Background Blur', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="range" name="background_image_blur" id="background_image_blur" min="0" max="20" value="<?php echo esc_attr($settings['background_image_blur']); ?>">
+                            <span id="blur_value"><?php echo esc_attr($settings['background_image_blur']); ?>px</span>
+                            <p class="description"><?php _e('Amount of blur to apply to the background image.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <p class="submit">
+                    <input type="submit" name="submit" id="submit" class="button button-primary" value="<?php _e('Save Settings', 'pagelock'); ?>">
+                </p>
+            </form>
+        </div>
+
+        <script>
+            jQuery(document).ready(function($) {
+                // Enqueue WordPress media scripts
+                if (typeof wp !== 'undefined' && wp.media) {
+
+                    // Icon Image Media Library
+                    var iconFrame;
+                    $('#select_icon_image').on('click', function(e) {
+                        e.preventDefault();
+
+                        if (iconFrame) {
+                            iconFrame.open();
+                            return;
+                        }
+
+                        iconFrame = wp.media({
+                            title: '<?php _e('Select Icon Image', 'pagelock'); ?>',
+                            button: {
+                                text: '<?php _e('Use this image', 'pagelock'); ?>'
+                            },
+                            multiple: false,
+                            library: {
+                                type: 'image'
+                            }
+                        });
+
+                        iconFrame.on('select', function() {
+                            var attachment = iconFrame.state().get('selection').first().toJSON();
+                            $('#icon_image_id').val(attachment.id);
+                            $('#icon_image_preview').html('<img src="' + attachment.url + '" style="max-width: 80px; max-height: 80px; display: block; margin-bottom: 10px;">');
+                        });
+
+                        iconFrame.open();
+                    });
+
+                    $('#remove_icon_image').on('click', function(e) {
+                        e.preventDefault();
+                        $('#icon_image_id').val('');
+                        $('#icon_image_preview').html('');
+                    });
+
+                    // Background Image Media Library
+                    var backgroundFrame;
+                    $('#select_background_image').on('click', function(e) {
+                        e.preventDefault();
+
+                        if (backgroundFrame) {
+                            backgroundFrame.open();
+                            return;
+                        }
+
+                        backgroundFrame = wp.media({
+                            title: '<?php _e('Select Background Image', 'pagelock'); ?>',
+                            button: {
+                                text: '<?php _e('Use this image', 'pagelock'); ?>'
+                            },
+                            multiple: false,
+                            library: {
+                                type: 'image'
+                            }
+                        });
+
+                        backgroundFrame.on('select', function() {
+                            var attachment = backgroundFrame.state().get('selection').first().toJSON();
+                            $('#background_image_id').val(attachment.id);
+                            $('#background_image_preview').html('<img src="' + attachment.url + '" style="max-width: 200px; max-height: 150px; display: block; margin-bottom: 10px;">');
+                        });
+
+                        backgroundFrame.open();
+                    });
+
+                    $('#remove_background_image').on('click', function(e) {
+                        e.preventDefault();
+                        $('#background_image_id').val('');
+                        $('#background_image_preview').html('');
+                    });
+                }
+
+                function toggleBackgroundOptions() {
+                    var selectedType = $('#background_type').val();
+                    $('.background-solid-row, .background-curve-row, .background-image-row').hide();
+                    $('.background-' + selectedType + '-row').show();
+                }
+
+                $('#background_type').on('change', toggleBackgroundOptions);
+                toggleBackgroundOptions();
+
+                $('#background_image_blur').on('input', function() {
+                    $('#blur_value').text($(this).val() + 'px');
+                });
+
+                $('#pagelock-settings-form').on('submit', function(e) {
+                    e.preventDefault();
+                    var form = $(this);
+                    var formData = form.serialize();
+
+                    $.post(form.attr('action'), formData, function(response) {
+                        if (response.success) {
+                            $('<div class="notice notice-success is-dismissible"><p>' + response.data + '</p></div>').insertAfter('.wrap h1');
+                        } else {
+                            $('<div class="notice notice-error is-dismissible"><p>' + (response.data || 'An error occurred.') + '</p></div>').insertAfter('.wrap h1');
+                        }
+                    }).fail(function() {
+                        $('<div class="notice notice-error is-dismissible"><p>An error occurred while saving settings.</p></div>').insertAfter('.wrap h1');
+                    });
+                });
+            });
+        </script>
+    <?php
+    }
+
     private function render_lock_form($lock = null)
     {
         $is_edit = !empty($lock);
@@ -217,6 +498,74 @@ class Pagelock_Admin
             });
         </script>
 <?php
+    }
+
+    public function handle_save_settings()
+    {
+        check_ajax_referer('pagelock_save_settings');
+
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Unauthorized access.', 'pagelock'));
+        }
+
+        $settings = array();
+
+        // Handle icon image from media library
+        if (isset($_POST['icon_image_id']) && !empty($_POST['icon_image_id'])) {
+            $icon_id = intval($_POST['icon_image_id']);
+            $icon_url = wp_get_attachment_url($icon_id);
+            if ($icon_url) {
+                $settings['icon_image_id'] = $icon_id;
+                $settings['icon_image'] = $icon_url;
+            }
+        } else {
+            $settings['icon_image_id'] = '';
+            $settings['icon_image'] = '';
+        }
+
+        // Handle background image from media library
+        if (isset($_POST['background_image_id']) && !empty($_POST['background_image_id'])) {
+            $bg_id = intval($_POST['background_image_id']);
+            $bg_url = wp_get_attachment_url($bg_id);
+            if ($bg_url) {
+                $settings['background_image_id'] = $bg_id;
+                $settings['background_image'] = $bg_url;
+            }
+        } else {
+            $settings['background_image_id'] = '';
+            $settings['background_image'] = '';
+        }
+
+        // Handle other settings
+        $fields = array(
+            'button_color',
+            'form_background_color',
+            'heading_text_color',
+            'body_text_color',
+            'background_type',
+            'background_solid_color',
+            'background_curve_color1',
+            'background_curve_color2',
+            'background_image_overlay_color',
+            'background_image_blur'
+        );
+
+        foreach ($fields as $field) {
+            if (isset($_POST[$field])) {
+                $settings[$field] = sanitize_text_field($_POST[$field]);
+            }
+        }
+
+        // Handle checkbox
+        $settings['background_image_overlay'] = isset($_POST['background_image_overlay']) ? true : false;
+
+        $result = Pagelock_Database::update_settings($settings);
+
+        if ($result !== false) {
+            wp_send_json_success(__('Settings saved successfully.', 'pagelock'));
+        } else {
+            wp_send_json_error(__('Failed to save settings.', 'pagelock'));
+        }
     }
 
     public function handle_save_lock()

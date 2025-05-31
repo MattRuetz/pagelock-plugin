@@ -82,6 +82,9 @@ class Pagelock
                 PAGELOCK_VERSION,
                 true
             );
+
+            // Enqueue WordPress media scripts for image selection
+            wp_enqueue_media();
         }
     }
 }

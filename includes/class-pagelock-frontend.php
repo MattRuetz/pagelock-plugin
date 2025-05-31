@@ -78,7 +78,73 @@ class Pagelock_Frontend
         $site_name = get_bloginfo('name');
         $page_title = $post->post_title;
 
+        // Get style settings
+        $settings = Pagelock_Database::get_settings();
+
         wp_head();
+
+        // Generate background styles based on settings
+        $background_style = '';
+        $background_overlay = '';
+
+        switch ($settings['background_type']) {
+            case 'solid':
+                $background_style = 'background: ' . esc_attr($settings['background_solid_color']) . ';';
+                break;
+            case 'curve':
+                $background_style = 'background: linear-gradient(135deg, ' . esc_attr($settings['background_curve_color1']) . ' 0%, ' . esc_attr($settings['background_curve_color2']) . ' 100%);';
+                // Add the curve element
+                $curve_color = $settings['background_curve_color1']; // Use the first color for the curve
+                $curve_hex = str_replace('#', '%23', $curve_color);
+                $background_overlay = "
+                body::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: -50%;
+                    width: 200%;
+                    height: 200%;
+                    background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\"><path d=\"M0,500 Q250,200 500,500 T1000,500 L1000,1000 L0,1000 Z\" fill=\"{$curve_hex}\" opacity=\"0.1\"/></svg>') no-repeat center;
+                    background-size: cover;
+                    animation: float 20s ease-in-out infinite;
+                }";
+                break;
+            case 'image':
+                if (!empty($settings['background_image'])) {
+                    $blur_style = $settings['background_image_blur'] > 0 ? 'filter: blur(' . $settings['background_image_blur'] . 'px);' : '';
+                    $background_style = "background: url('" . esc_url($settings['background_image']) . "') center center / cover no-repeat;";
+
+                    if ($settings['background_image_overlay']) {
+                        $background_overlay = "
+                        body::after {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: " . esc_attr($settings['background_image_overlay_color']) . ";
+                            z-index: 1;
+                        }";
+                    }
+
+                    if ($blur_style) {
+                        $background_overlay .= "
+                        body::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: url('" . esc_url($settings['background_image']) . "') center center / cover no-repeat;
+                            {$blur_style}
+                            z-index: 0;
+                        }";
+                    }
+                }
+                break;
+        }
 ?>
         <!DOCTYPE html>
         <html <?php language_attributes(); ?>>
@@ -96,8 +162,7 @@ class Pagelock_Frontend
 
                 body {
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    background: linear-gradient(135deg, #F8E7CE 0%, #F8E7CE 100%);
-                    min-height: 100vh;
+                    <?php echo $background_style; ?>min-height: 100vh;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -105,20 +170,7 @@ class Pagelock_Frontend
                     overflow: hidden;
                 }
 
-                /* Organic background shapes */
-                body::before {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    left: -50%;
-                    width: 200%;
-                    height: 200%;
-                    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><path d="M0,500 Q250,200 500,500 T1000,500 L1000,1000 L0,1000 Z" fill="%23ED9A25" opacity="0.1"/></svg>') no-repeat center;
-                    background-size: cover;
-                    animation: float 20s ease-in-out infinite;
-                }
-
-                @keyframes float {
+                <?php echo $background_overlay; ?>@keyframes float {
 
                     0%,
                     100% {
@@ -131,7 +183,7 @@ class Pagelock_Frontend
                 }
 
                 .pagelock-container {
-                    background: rgba(255, 255, 255, 0.95);
+                    background: <?php echo esc_attr($settings['form_background_color']); ?>;
                     backdrop-filter: blur(10px);
                     border-radius: 24px;
                     padding: 3rem;
@@ -153,22 +205,30 @@ class Pagelock_Frontend
                     align-items: center;
                     justify-content: center;
                     position: relative;
+                    overflow: hidden;
                 }
 
-                .pagelock-icon::before {
+                <?php if (!empty($settings['icon_image'])): ?>.pagelock-icon img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 50%;
+                }
+
+                <?php else: ?>.pagelock-icon::before {
                     content: '🌿';
                     font-size: 2.5rem;
                 }
 
-                .pagelock-title {
+                <?php endif; ?>.pagelock-title {
                     font-size: 2rem;
-                    color: #6C0E23;
+                    color: <?php echo esc_attr($settings['heading_text_color']); ?>;
                     margin-bottom: 1rem;
                     font-weight: 700;
                 }
 
                 .pagelock-subtitle {
-                    color: #46351D;
+                    color: <?php echo esc_attr($settings['body_text_color']); ?>;
                     margin-bottom: 2rem;
                     font-size: 1.1rem;
                     line-height: 1.6;
@@ -197,7 +257,7 @@ class Pagelock_Frontend
                 }
 
                 .pagelock-button {
-                    background: linear-gradient(135deg, #ED9A25 0%, #D17F2B 100%);
+                    background: <?php echo esc_attr($settings['button_color']); ?>;
                     color: white;
                     border: none;
                     padding: 1rem 2rem;
@@ -214,6 +274,7 @@ class Pagelock_Frontend
                 .pagelock-button:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 8px 25px rgba(237, 154, 37, 0.3);
+                    filter: brightness(1.1);
                 }
 
                 .pagelock-button:active {
@@ -237,29 +298,8 @@ class Pagelock_Frontend
                 }
 
                 .pagelock-footer {
-                    color: #46351D;
+                    color: <?php echo esc_attr($settings['body_text_color']); ?>;
                     font-size: 0.9rem;
-                }
-
-                .pagelock-decorative-element {
-                    position: absolute;
-                    width: 60px;
-                    height: 60px;
-                    border-radius: 50%;
-                    background: linear-gradient(45deg, #A5AB52, #566246);
-                    opacity: 0.1;
-                }
-
-                .pagelock-decorative-element:nth-child(1) {
-                    top: -30px;
-                    right: -30px;
-                    animation: float 15s ease-in-out infinite;
-                }
-
-                .pagelock-decorative-element:nth-child(2) {
-                    bottom: -20px;
-                    left: -20px;
-                    animation: float 18s ease-in-out infinite reverse;
                 }
 
                 /* Responsive */
@@ -278,10 +318,11 @@ class Pagelock_Frontend
 
         <body>
             <div class="pagelock-container">
-                <div class="pagelock-decorative-element"></div>
-                <div class="pagelock-decorative-element"></div>
-
-                <div class="pagelock-icon"></div>
+                <div class="pagelock-icon">
+                    <?php if (!empty($settings['icon_image'])): ?>
+                        <img src="<?php echo esc_url($settings['icon_image']); ?>" alt="<?php _e('Lock Icon', 'pagelock'); ?>">
+                    <?php endif; ?>
+                </div>
 
                 <h1 class="pagelock-title">Access Required</h1>
                 <p class="pagelock-subtitle">
