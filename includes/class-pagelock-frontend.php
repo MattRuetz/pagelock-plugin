@@ -162,12 +162,13 @@ class Pagelock_Frontend
 
                 body {
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    <?php echo $background_style; ?>min-height: 100vh;
+                    min-height: 100vh;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     position: relative;
                     overflow: hidden;
+                    <?php echo $background_style; ?>
                 }
 
                 <?php echo $background_overlay; ?>@keyframes float {
@@ -185,7 +186,7 @@ class Pagelock_Frontend
                 .pagelock-container {
                     background: <?php echo esc_attr($settings['form_background_color']); ?>;
                     backdrop-filter: blur(10px);
-                    border-radius: 24px;
+                    border-radius: <?php echo esc_attr($settings['form_border_radius']); ?>px;
                     padding: 3rem;
                     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
                     max-width: 480px;
@@ -199,7 +200,7 @@ class Pagelock_Frontend
                     width: 80px;
                     height: 80px;
                     margin: 0 auto 2rem;
-                    background: linear-gradient(135deg, #A5AB52 0%, #566246 100%);
+                    background: linear-gradient(135deg, <?php echo esc_attr($settings['icon_background_color1']); ?> 0%, <?php echo esc_attr($settings['icon_background_color2']); ?> 100%);
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
@@ -238,11 +239,36 @@ class Pagelock_Frontend
                     margin-bottom: 2rem;
                 }
 
-                .pagelock-input {
+                <?php if ($settings['field_design'] === 'minimal'): ?>input[type="password"].pagelock-input {
+                    width: 100%;
+                    padding: 1rem 0;
+                    border: none;
+                    border-bottom: 2px solid rgba(165, 171, 82, 0.3);
+                    font-size: 1.1rem;
+                    background: transparent;
+                    transition: all 0.3s ease;
+                    margin-bottom: 1.5rem;
+                    outline: none;
+                    color: <?php echo esc_attr($settings['body_text_color']); ?>;
+                }
+
+                input[type="password"].pagelock-input::placeholder {
+                    color: rgba(<?php
+                                $rgb = sscanf($settings['body_text_color'], "#%02x%02x%02x");
+                                echo implode(', ', $rgb);
+                                ?>, 0.6);
+                }
+
+                input[type="password"].pagelock-input:focus {
+                    border-bottom-color: <?php echo esc_attr($settings['icon_background_color1']); ?>;
+                    background: transparent;
+                }
+
+                <?php else: ?>input[type="password"].pagelock-input {
                     width: 100%;
                     padding: 1rem 1.5rem;
                     border: 2px solid rgba(165, 171, 82, 0.3);
-                    border-radius: 16px;
+                    border-radius: <?php echo esc_attr($settings['field_border_radius']); ?>px;
                     font-size: 1.1rem;
                     background: rgba(248, 231, 206, 0.5);
                     transition: all 0.3s ease;
@@ -250,18 +276,18 @@ class Pagelock_Frontend
                     outline: none;
                 }
 
-                .pagelock-input:focus {
+                input[type="password"].pagelock-input:focus {
                     border-color: #A5AB52;
                     box-shadow: 0 0 0 4px rgba(165, 171, 82, 0.1);
                     background: #fff;
                 }
 
-                .pagelock-button {
+                <?php endif; ?>.pagelock-button {
                     background: <?php echo esc_attr($settings['button_color']); ?>;
                     color: white;
                     border: none;
                     padding: 1rem 2rem;
-                    border-radius: 16px;
+                    border-radius: <?php echo esc_attr($settings['button_border_radius']); ?>px;
                     font-size: 1.1rem;
                     font-weight: 600;
                     cursor: pointer;

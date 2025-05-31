@@ -150,6 +150,7 @@ class Pagelock_Admin
 
     public function settings_page()
     {
+        wp_enqueue_media();
         $settings = Pagelock_Database::get_settings();
     ?>
         <div class="wrap">
@@ -176,6 +177,24 @@ class Pagelock_Admin
                                 <button type="button" class="button" id="remove_icon_image" style="margin-left: 5px;"><?php _e('Remove Image', 'pagelock'); ?></button>
                             </div>
                             <p class="description"><?php _e('Select an image from the media library to replace the plant emoji in the password form.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="icon_background_color1"><?php _e('Icon Background Gradient Color 1', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" name="icon_background_color1" id="icon_background_color1" value="<?php echo esc_attr($settings['icon_background_color1']); ?>">
+                            <p class="description"><?php _e('First color of the icon background gradient.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="icon_background_color2"><?php _e('Icon Background Gradient Color 2', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" name="icon_background_color2" id="icon_background_color2" value="<?php echo esc_attr($settings['icon_background_color2']); ?>">
+                            <p class="description"><?php _e('Second color of the icon background gradient.', 'pagelock'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -212,6 +231,48 @@ class Pagelock_Admin
                         <td>
                             <input type="color" name="body_text_color" id="body_text_color" value="<?php echo esc_attr($settings['body_text_color']); ?>">
                             <p class="description"><?php _e('Color of the body text and descriptions.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="field_design"><?php _e('Field Design', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <select name="field_design" id="field_design">
+                                <option value="default" <?php selected($settings['field_design'], 'default'); ?>><?php _e('Default', 'pagelock'); ?></option>
+                                <option value="minimal" <?php selected($settings['field_design'], 'minimal'); ?>><?php _e('Minimal', 'pagelock'); ?></option>
+                            </select>
+                            <p class="description"><?php _e('Choose the design style for the password input field.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="form_border_radius"><?php _e('Form Border Radius', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="range" name="form_border_radius" id="form_border_radius" min="0" max="50" value="<?php echo esc_attr($settings['form_border_radius']); ?>">
+                            <span id="form_radius_value"><?php echo esc_attr($settings['form_border_radius']); ?>px</span>
+                            <p class="description"><?php _e('Border radius of the password form container.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="field_border_radius"><?php _e('Field Border Radius', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="range" name="field_border_radius" id="field_border_radius" min="0" max="50" value="<?php echo esc_attr($settings['field_border_radius']); ?>">
+                            <span id="field_radius_value"><?php echo esc_attr($settings['field_border_radius']); ?>px</span>
+                            <p class="description"><?php _e('Border radius of the password input field.', 'pagelock'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="button_border_radius"><?php _e('Button Border Radius', 'pagelock'); ?></label>
+                        </th>
+                        <td>
+                            <input type="range" name="button_border_radius" id="button_border_radius" min="0" max="50" value="<?php echo esc_attr($settings['button_border_radius']); ?>">
+                            <span id="button_radius_value"><?php echo esc_attr($settings['button_border_radius']); ?>px</span>
+                            <p class="description"><?php _e('Border radius of the access button.', 'pagelock'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -399,6 +460,19 @@ class Pagelock_Admin
                     $('#blur_value').text($(this).val() + 'px');
                 });
 
+                // Handle border radius sliders
+                $('#form_border_radius').on('input', function() {
+                    $('#form_radius_value').text($(this).val() + 'px');
+                });
+
+                $('#field_border_radius').on('input', function() {
+                    $('#field_radius_value').text($(this).val() + 'px');
+                });
+
+                $('#button_border_radius').on('input', function() {
+                    $('#button_radius_value').text($(this).val() + 'px');
+                });
+
                 $('#pagelock-settings-form').on('submit', function(e) {
                     e.preventDefault();
                     var form = $(this);
@@ -542,12 +616,18 @@ class Pagelock_Admin
             'form_background_color',
             'heading_text_color',
             'body_text_color',
+            'icon_background_color1',
+            'icon_background_color2',
+            'field_design',
             'background_type',
             'background_solid_color',
             'background_curve_color1',
             'background_curve_color2',
             'background_image_overlay_color',
-            'background_image_blur'
+            'background_image_blur',
+            'form_border_radius',
+            'field_border_radius',
+            'button_border_radius'
         );
 
         foreach ($fields as $field) {

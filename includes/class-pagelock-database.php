@@ -62,10 +62,13 @@ class Pagelock_Database
         $default_settings = array(
             'icon_image' => '',
             'icon_image_id' => '',
+            'icon_background_color1' => '#A5AB52',
+            'icon_background_color2' => '#566246',
             'button_color' => '#ED9A25',
             'form_background_color' => 'rgba(255, 255, 255, 0.95)',
             'heading_text_color' => '#6C0E23',
             'body_text_color' => '#46351D',
+            'field_design' => 'default',
             'background_type' => 'curve',
             'background_solid_color' => '#F8E7CE',
             'background_curve_color1' => '#F8E7CE',
@@ -74,7 +77,10 @@ class Pagelock_Database
             'background_image_id' => '',
             'background_image_overlay' => true,
             'background_image_overlay_color' => 'rgba(248, 231, 206, 0.8)',
-            'background_image_blur' => 0
+            'background_image_blur' => 0,
+            'form_border_radius' => 24,
+            'field_border_radius' => 16,
+            'button_border_radius' => 16
         );
 
         if (!get_option('pagelock_settings')) {
