@@ -143,6 +143,16 @@ class Pagelock_Database
         $table_name = $wpdb->prefix . 'pagelock_locks';
         $locks = $wpdb->get_results("SELECT * FROM $table_name");
 
+        // Check for database errors
+        if ($wpdb->last_error) {
+            error_log('Pagelock database error: ' . $wpdb->last_error);
+            return null;
+        }
+
+        if (!is_array($locks)) {
+            return null;
+        }
+
         foreach ($locks as $lock) {
             $pages = maybe_unserialize($lock->pages);
             if (is_array($pages) && in_array($page_id, $pages)) {
@@ -194,11 +204,17 @@ class Pagelock_Database
             $update_data['password'] = wp_hash_password($data['password']);
         }
 
+        // Build format array based on actual fields being updated
+        $formats = array('%s', '%s'); // name, pages
+        if (!empty($data['password'])) {
+            $formats[] = '%s'; // password
+        }
+
         return $wpdb->update(
             $table_name,
             $update_data,
             array('id' => $id),
-            array('%s', '%s'),
+            $formats,
             array('%d')
         );
     }

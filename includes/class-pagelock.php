@@ -36,6 +36,11 @@ class Pagelock
 
     public function init()
     {
+        // Start session if not already started
+        if (!session_id()) {
+            session_start();
+        }
+        
         // Load text domain for internationalization
         load_plugin_textdomain('pagelock', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }

@@ -46,7 +46,7 @@ class Pagelock_Frontend
 
     private function is_authenticated($lock_id)
     {
-        if (!isset($_SESSION)) {
+        if (!session_id()) {
             session_start();
         }
 
@@ -57,7 +57,7 @@ class Pagelock_Frontend
 
     private function authenticate_user($lock_id)
     {
-        if (!isset($_SESSION)) {
+        if (!session_id()) {
             session_start();
         }
 
@@ -676,14 +676,28 @@ class Pagelock_Frontend
 
     public function handle_password_verification()
     {
-        check_ajax_referer('pagelock_verify');
+        // Verify nonce
+        if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'pagelock_verify')) {
+            wp_send_json_error(__('Security check failed. Please refresh and try again.', 'pagelock'));
+        }
+
+        // Validate required fields
+        if (!isset($_POST['lock_id']) || !isset($_POST['page_id']) || !isset($_POST['password'])) {
+            wp_send_json_error(__('Missing required fields.', 'pagelock'));
+        }
 
         $lock_id = intval($_POST['lock_id']);
         $page_id = intval($_POST['page_id']);
-        $password = $_POST['password'];
+        $password = sanitize_text_field($_POST['password']);
 
         if (empty($password)) {
             wp_send_json_error(__('Password is required.', 'pagelock'));
+        }
+
+        // Verify lock exists and is valid for the page
+        $lock = Pagelock_Database::get_lock_for_page($page_id);
+        if (!$lock || $lock->id != $lock_id) {
+            wp_send_json_error(__('Invalid lock configuration.', 'pagelock'));
         }
 
         // Verify password
