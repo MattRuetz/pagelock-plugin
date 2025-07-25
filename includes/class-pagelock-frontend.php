@@ -14,9 +14,83 @@ class Pagelock_Frontend
 
     public function init()
     {
-        add_action('template_redirect', array($this, 'check_page_lock'));
+        add_action('init', array($this, 'start_session'), 1);
+        add_action('init', array($this, 'setup_cache_exclusions'), 1);
+        add_action('template_redirect', array($this, 'check_page_lock'), 1);
         add_action('wp_ajax_pagelock_verify_password', array($this, 'handle_password_verification'));
         add_action('wp_ajax_nopriv_pagelock_verify_password', array($this, 'handle_password_verification'));
+    }
+
+    public function start_session()
+    {
+        if (!session_id()) {
+            session_start();
+        }
+    }
+
+    public function setup_cache_exclusions()
+    {
+        // Set up early cache exclusions for cache plugins that need it
+        
+        // WP Rocket - exclude URLs with pagelock
+        add_filter('rocket_cache_reject_uri', array($this, 'rocket_exclude_protected_pages'));
+        
+        // Cloudflare
+        if (class_exists('CF\WordPress\Hooks')) {
+            add_filter('cloudflare_purge_by_url', array($this, 'cloudflare_exclude_protected_pages'));
+        }
+        
+        // Breeze (Cloudways)
+        if (class_exists('Breeze_Admin')) {
+            add_filter('breeze_exclude_url', array($this, 'breeze_exclude_protected_pages'));
+        }
+    }
+
+    public function rocket_exclude_protected_pages($uri)
+    {
+        // Get all protected pages and exclude them from caching
+        $locks = Pagelock_Database::get_locks();
+        if ($locks) {
+            foreach ($locks as $lock) {
+                $pages = maybe_unserialize($lock->pages);
+                if (is_array($pages)) {
+                    foreach ($pages as $page_id) {
+                        $page_url = get_permalink($page_id);
+                        if ($page_url) {
+                            $path = parse_url($page_url, PHP_URL_PATH);
+                            $uri[] = $path;
+                        }
+                    }
+                }
+            }
+        }
+        return $uri;
+    }
+
+    public function cloudflare_exclude_protected_pages($urls)
+    {
+        // Similar exclusion for Cloudflare
+        $locks = Pagelock_Database::get_locks();
+        if ($locks) {
+            foreach ($locks as $lock) {
+                $pages = maybe_unserialize($lock->pages);
+                if (is_array($pages)) {
+                    foreach ($pages as $page_id) {
+                        $page_url = get_permalink($page_id);
+                        if ($page_url && !in_array($page_url, $urls)) {
+                            $urls[] = $page_url;
+                        }
+                    }
+                }
+            }
+        }
+        return $urls;
+    }
+
+    public function breeze_exclude_protected_pages($urls)
+    {
+        // Similar exclusion for Breeze
+        return $this->cloudflare_exclude_protected_pages($urls);
     }
 
     public function check_page_lock()
@@ -34,18 +108,22 @@ class Pagelock_Frontend
             return;
         }
 
+        // Add cache-busting for locked pages (prevents caching even when authenticated)
+        $this->set_no_cache_headers();
+
         // Check if user is already authenticated for this lock
         if ($this->is_authenticated($lock->id)) {
             return;
         }
 
-        // Show password form
+        // Show password form with additional cache prevention
         $this->show_password_form($lock);
         exit;
     }
 
     private function is_authenticated($lock_id)
     {
+        // Session should already be started by init hook, but double-check
         if (!session_id()) {
             session_start();
         }
@@ -67,6 +145,127 @@ class Pagelock_Frontend
 
         if (!in_array($lock_id, $_SESSION['pagelock_authenticated'])) {
             $_SESSION['pagelock_authenticated'][] = $lock_id;
+        }
+
+        // Force session write to ensure data persists
+        session_write_close();
+        session_start();
+    }
+
+    private function set_no_cache_headers()
+    {
+        // Prevent caching with standard headers
+        if (!headers_sent()) {
+            header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
+            header('Expires: Wed, 11 Jan 1984 05:00:00 GMT');
+        }
+
+        // WordPress specific no-cache
+        if (!defined('DONOTCACHEPAGE')) {
+            define('DONOTCACHEPAGE', true);
+        }
+        if (!defined('DONOTCACHEOBJECT')) {
+            define('DONOTCACHEOBJECT', true);
+        }
+        if (!defined('DONOTCACHEDB')) {
+            define('DONOTCACHEDB', true);
+        }
+
+        // Popular cache plugin exclusions
+        $this->exclude_from_cache_plugins();
+    }
+
+    private function exclude_from_cache_plugins()
+    {
+        // WP Rocket
+        if (function_exists('rocket_clean_domain')) {
+            add_filter('rocket_cache_reject_uri', array($this, 'rocket_exclude_uri'));
+            add_filter('rocket_cache_query_strings', array($this, 'rocket_exclude_query_strings'));
+        }
+
+        // W3 Total Cache
+        if (defined('W3TC')) {
+            add_filter('w3tc_can_cache', '__return_false');
+        }
+
+        // WP Super Cache
+        if (function_exists('wp_cache_serve_cache_file')) {
+            global $cache_enabled;
+            $cache_enabled = false;
+        }
+
+        // WP Fastest Cache
+        if (class_exists('WpFastestCache')) {
+            add_filter('wpfc_is_cacheable', '__return_false');
+        }
+
+        // LiteSpeed Cache
+        if (defined('LSCWP_V')) {
+            add_filter('litespeed_cache_is_cacheable', '__return_false');
+        }
+
+        // Autoptimize
+        if (class_exists('autoptimizeCache')) {
+            add_filter('autoptimize_filter_noptimize', '__return_true');
+        }
+    }
+
+    public function rocket_exclude_uri($uri)
+    {
+        global $post;
+        if ($post && Pagelock_Database::get_lock_for_page($post->ID)) {
+            $uri[] = '.*';
+        }
+        return $uri;
+    }
+
+    public function rocket_exclude_query_strings($query_strings)
+    {
+        $query_strings[] = 'pagelock_auth';
+        return $query_strings;
+    }
+
+    private function clear_page_cache($page_id)
+    {
+        $page_url = get_permalink($page_id);
+        
+        // WP Rocket
+        if (function_exists('rocket_clean_files')) {
+            rocket_clean_files(array($page_url));
+        }
+        
+        // W3 Total Cache
+        if (function_exists('w3tc_flush_url')) {
+            w3tc_flush_url($page_url);
+        }
+        
+        // WP Super Cache
+        if (function_exists('wp_cache_post_change')) {
+            wp_cache_post_change($page_id);
+        }
+        
+        // LiteSpeed Cache
+        if (class_exists('LiteSpeed_Cache_Purge')) {
+            LiteSpeed_Cache_Purge::purge_post($page_id);
+        }
+        
+        // Autoptimize
+        if (class_exists('autoptimizeCache')) {
+            autoptimizeCache::clearall();
+        }
+        
+        // WP Fastest Cache
+        if (class_exists('WpFastestCache')) {
+            $wpfc = new WpFastestCache();
+            if (method_exists($wpfc, 'singleDeleteCache')) {
+                $wpfc->singleDeleteCache(false, $page_id);
+            }
+        }
+        
+        // Generic WordPress cache clearing
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
         }
     }
 
@@ -703,6 +902,10 @@ class Pagelock_Frontend
         // Verify password
         if (Pagelock_Database::verify_password($lock_id, $password)) {
             $this->authenticate_user($lock_id);
+            
+            // Clear cache for this page after successful authentication
+            $this->clear_page_cache($page_id);
+            
             wp_send_json_success(__('Access granted.', 'pagelock'));
         } else {
             wp_send_json_error(__('Invalid password.', 'pagelock'));

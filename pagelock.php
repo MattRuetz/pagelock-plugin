@@ -4,7 +4,7 @@
  * Plugin Name: Pagelock
  * Plugin URI: https://mattruetz.com/
  * Description: A WordPress plugin to password-protect specific pages with custom password locks.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Matt Ruetz
  * License: GPL v2 or later
  * Text Domain: pagelock
