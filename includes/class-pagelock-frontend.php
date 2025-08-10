@@ -23,9 +23,44 @@ class Pagelock_Frontend
 
     public function start_session()
     {
+        // Don't start sessions for REST API requests, admin-ajax, or admin pages
+        if ($this->should_skip_session()) {
+            return;
+        }
+
         if (!session_id()) {
             session_start();
         }
+    }
+
+    private function should_skip_session()
+    {
+        // Skip if this is a REST API request
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            return true;
+        }
+
+        // Skip if this is an admin-ajax request
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            return true;
+        }
+
+        // Skip if we're in the admin area
+        if (is_admin()) {
+            return true;
+        }
+
+        // Skip if this is a REST API URL pattern
+        if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/wp-json/') !== false) {
+            return true;
+        }
+
+        // Skip if this is a cron request
+        if (defined('DOING_CRON') && DOING_CRON) {
+            return true;
+        }
+
+        return false;
     }
 
     public function setup_cache_exclusions()
@@ -875,6 +910,11 @@ class Pagelock_Frontend
 
     public function handle_password_verification()
     {
+        // Start session for password verification (we need this even though it's AJAX)
+        if (!session_id()) {
+            session_start();
+        }
+
         // Verify nonce
         if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'pagelock_verify')) {
             wp_send_json_error(__('Security check failed. Please refresh and try again.', 'pagelock'));
